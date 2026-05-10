@@ -13,10 +13,10 @@ import { toast } from "sonner";
 import {
   User, Building2, Phone, Mail, Lock, Gift, Copy, Check,
   Loader2, Users, Award, Eye, EyeOff, UserPlus, Trash2,
-  ShieldCheck, Clock, Crown,
+  ShieldCheck, Clock, Crown, Download, AlertTriangle,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Profile {
@@ -59,12 +59,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Account() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const { referralCode, referralLink } = useReferral();
   const { plan, price_id } = useSubscription() as { plan: string | null; price_id: string | null };
   const isPro = plan === "admin" || price_id === STRIPE_PRICES.pro_monthly || price_id === STRIPE_PRICES.pro_yearly;
   const [copied, setCopied] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [exportingLeads, setExportingLeads] = useState(false);
+  const [exportingProps, setExportingProps] = useState(false);
 
   // ── Profil ────────────────────────────────────────────────────────────────
   const { data: profile, isLoading: profileLoading } = useQuery<Profile>({
@@ -201,6 +206,62 @@ export default function Account() {
       return { total, converted, rewarded };
     },
   });
+
+  // ── Export CSV ────────────────────────────────────────────────────────────
+  const exportCSV = (rows: Record<string, unknown>[], filename: string) => {
+    if (!rows.length) { toast.error("Aucune donnée à exporter"); return; }
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(";"),
+      ...rows.map((r) => headers.map((h) => {
+        const v = r[h] ?? "";
+        const s = String(v).replace(/"/g, '""');
+        return s.includes(";") || s.includes("\n") ? `"${s}"` : s;
+      }).join(";")),
+    ].join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${rows.length} lignes exportées`);
+  };
+
+  const handleExportLeads = async () => {
+    setExportingLeads(true);
+    const { data } = await supabase.from("leads").select("*").eq("user_id", user!.id);
+    setExportingLeads(false);
+    if (data) exportCSV(data as Record<string, unknown>[], `leads_${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+
+  const handleExportProps = async () => {
+    setExportingProps(true);
+    const { data } = await supabase.from("properties").select("*").eq("user_id", user!.id);
+    setExportingProps(false);
+    if (data) exportCSV(data as Record<string, unknown>[], `biens_${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+
+  // ── Suppression de compte ─────────────────────────────────────────────────
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== "SUPPRIMER") {
+      toast.error('Tapez "SUPPRIMER" pour confirmer');
+      return;
+    }
+    setDeleting(true);
+    try {
+      // Supprimer les données utilisateur (leads, biens, profiles)
+      await supabase.from("leads").delete().eq("user_id", user!.id);
+      await supabase.from("properties").delete().eq("user_id", user!.id);
+      await supabase.from("profiles").delete().eq("id", user!.id);
+      // Déconnexion (la suppression auth nécessite le service role — l'utilisateur est déloggué)
+      await signOut();
+      navigate("/", { replace: true });
+      toast.success("Compte supprimé", { description: "Toutes vos données ont été effacées." });
+    } catch (e) {
+      setDeleting(false);
+      toast.error("Erreur lors de la suppression", { description: (e as Error).message });
+    }
+  };
 
   const copyLink = () => {
     if (!referralLink) return;
@@ -480,6 +541,63 @@ export default function Account() {
             <Link to="/cgv" className="text-primary hover:underline">CGV</Link>{" "}
             pour les conditions complètes.
           </p>
+        </Section>
+
+        {/* ── Export données ── */}
+        <Section title="Exporter mes données" icon={Download}>
+          <p className="text-sm text-muted-foreground">
+            Téléchargez vos leads et biens en CSV — conformément à votre droit à la portabilité (RGPD Art. 20).
+          </p>
+          <div className="flex flex-wrap gap-3 pt-1">
+            <Button
+              variant="outline"
+              className="h-9 gap-2 text-sm"
+              onClick={handleExportLeads}
+              disabled={exportingLeads}
+            >
+              {exportingLeads ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Leads (CSV)
+            </Button>
+            <Button
+              variant="outline"
+              className="h-9 gap-2 text-sm"
+              onClick={handleExportProps}
+              disabled={exportingProps}
+            >
+              {exportingProps ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Biens (CSV)
+            </Button>
+          </div>
+        </Section>
+
+        {/* ── Suppression de compte ── */}
+        <Section title="Supprimer mon compte" icon={AlertTriangle}>
+          <div className="rounded-xl border border-red-100 bg-red-50 p-4 space-y-4">
+            <p className="text-sm text-red-700 leading-relaxed">
+              <strong>Action irréversible.</strong> Toutes vos données (leads, biens, historique de matchs) seront
+              définitivement supprimées. Votre abonnement Stripe doit être résilié séparément.
+            </p>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-red-700 block">
+                Tapez <span className="font-mono bg-red-100 px-1 rounded">SUPPRIMER</span> pour confirmer
+              </label>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder="SUPPRIMER"
+                className="h-9 w-full rounded-lg border border-red-200 bg-white px-3 text-sm focus:outline-none focus:border-red-400"
+              />
+            </div>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleting || deleteConfirm !== "SUPPRIMER"}
+              className="w-full h-9 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+            >
+              {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Supprimer définitivement mon compte
+            </button>
+          </div>
         </Section>
 
       </div>

@@ -119,7 +119,7 @@ serve(async (req) => {
       ...(discounts
         ? { discounts, allow_promotion_codes: false }
         : { allow_promotion_codes: true }), // si pas de code, Stripe affiche le champ
-      success_url: `${origin}/dashboard?checkout=success`,
+      success_url: `${origin}/payment-success?plan=${priceId}`,
       cancel_url: `${origin}/pricing?checkout=cancel`,
     });
 
