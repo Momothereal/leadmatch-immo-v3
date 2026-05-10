@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { Loader2, Mail, Lock, ArrowRight, Building2, Sparkles, Zap, Users, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,8 @@ const Auth = ({ defaultMode = "signin" }: { defaultMode?: "signin" | "signup" })
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [acceptedCGU, setAcceptedCGU] = useState(false);
+  const [acceptedData, setAcceptedData] = useState(false);
 
   if (!loading && user) return <Navigate to="/dashboard" replace />;
 
@@ -52,6 +54,14 @@ const Auth = ({ defaultMode = "signin" }: { defaultMode?: "signin" | "signup" })
     const parsed = credSchema.safeParse({ email, password });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
+      return;
+    }
+    if (!acceptedCGU) {
+      toast.error("Acceptation requise", { description: "Vous devez accepter les CGU et la politique de confidentialité." });
+      return;
+    }
+    if (!acceptedData) {
+      toast.error("Acceptation requise", { description: "Vous devez accepter la politique d'utilisation des données." });
       return;
     }
     setSubmitting(true);
@@ -249,7 +259,47 @@ const Auth = ({ defaultMode = "signin" }: { defaultMode?: "signin" | "signup" })
                 <p className="text-[11px] text-[#9CA3AF]">
                   14 jours d'essai gratuit · Aucune carte bancaire requise.
                 </p>
-                <Button type="submit" className="w-full h-11 rounded-xl bg-[#0F2D52] hover:bg-[#1E4D8C] text-white font-semibold" disabled={submitting}>
+
+                {/* Checkboxes consentement obligatoires */}
+                <div className="space-y-3 pt-1">
+                  <label className="flex items-start gap-2.5 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={acceptedCGU}
+                      onChange={(e) => setAcceptedCGU(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#D1D5DB] accent-[#0F2D52]"
+                      required
+                    />
+                    <span className="text-[11px] text-[#6B7280] leading-relaxed">
+                      J'accepte les{" "}
+                      <Link to="/cgu" target="_blank" className="text-[#2563EB] hover:underline font-medium">CGU</Link>
+                      {", "}
+                      <Link to="/cgv" target="_blank" className="text-[#2563EB] hover:underline font-medium">CGV</Link>
+                      {" et les "}
+                      <Link to="/mentions-legales" target="_blank" className="text-[#2563EB] hover:underline font-medium">Mentions légales</Link>
+                      {" de LeadMatch Immo. "}
+                      <span className="text-[#EF4444] font-semibold">*</span>
+                    </span>
+                  </label>
+
+                  <label className="flex items-start gap-2.5 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={acceptedData}
+                      onChange={(e) => setAcceptedData(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#D1D5DB] accent-[#0F2D52]"
+                      required
+                    />
+                    <span className="text-[11px] text-[#6B7280] leading-relaxed">
+                      J'accepte la{" "}
+                      <Link to="/confidentialite" target="_blank" className="text-[#2563EB] hover:underline font-medium">politique de confidentialité</Link>
+                      {", notamment l'utilisation de mes données d'usage pour produire des statistiques de marché agrégées et anonymisées, et la possibilité de mise en relation avec des partenaires (courtiers, assureurs) avec le consentement des prospects concernés. "}
+                      <span className="text-[#EF4444] font-semibold">*</span>
+                    </span>
+                  </label>
+                </div>
+
+                <Button type="submit" className="w-full h-11 rounded-xl bg-[#0F2D52] hover:bg-[#1E4D8C] text-white font-semibold" disabled={submitting || !acceptedCGU || !acceptedData}>
                   {submitting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : null}
                   Créer le compte
                 </Button>
