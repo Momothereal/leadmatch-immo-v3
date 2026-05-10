@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, Target, LogOut, History } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Target, LogOut, History, UserCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import {
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/leads", label: "Leads", icon: Users },
   { to: "/matching", label: "Matching", icon: Target },
   { to: "/matching/history", label: "Historique", icon: History },
+  { to: "/account", label: "Mon compte", icon: UserCircle },
 ];
 
 const TITLES: Record<string, string> = {
@@ -22,6 +23,7 @@ const TITLES: Record<string, string> = {
   "/leads": "Mes leads",
   "/matching": "Matching",
   "/matching/history": "Historique des matchs",
+  "/account": "Mon compte",
 };
 
 function AppSidebar() {
@@ -62,11 +64,11 @@ function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t border-line-soft p-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-[13px] font-medium text-[hsl(var(--gold))] shrink-0">
+          <Link to="/account" className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-[13px] font-medium text-[hsl(var(--gold))] shrink-0 hover:opacity-80 transition-opacity" title="Mon compte">
             {user?.email?.[0]?.toUpperCase() ?? "U"}
-          </div>
+          </Link>
           <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-            <div className="text-[13px] font-medium text-foreground truncate">Mon compte</div>
+            <Link to="/account" className="text-[13px] font-medium text-foreground truncate hover:underline block">Mon compte</Link>
             <div className="text-[11px] text-muted-2 truncate">{user?.email}</div>
           </div>
           <button

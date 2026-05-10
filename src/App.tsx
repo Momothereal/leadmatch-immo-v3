@@ -18,6 +18,7 @@ import PropertyDetail from "./pages/PropertyDetail.tsx";
 import LeadDetail from "./pages/LeadDetail.tsx";
 import MatchHistory from "./pages/MatchHistory.tsx";
 import MatchDetail from "./pages/MatchDetail.tsx";
+import Account from "./pages/Account.tsx";
 import MentionsLegales from "./pages/legal/MentionsLegales.tsx";
 import Confidentialite from "./pages/legal/Confidentialite.tsx";
 import CGU from "./pages/legal/CGU.tsx";
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/matching" element={<ProtectedRoute><Matching /></ProtectedRoute>} />
             <Route path="/matching/history" element={<ProtectedRoute><MatchHistory /></ProtectedRoute>} />
             <Route path="/matching/history/:id" element={<ProtectedRoute><MatchDetail /></ProtectedRoute>} />
+            <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
             {/* Pages légales */}
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/confidentialite" element={<Confidentialite />} />
