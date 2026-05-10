@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   LeadMatch Immo — Design System
+   Inspired by editorial CRM tooling. Light, dense, professional.
+   All colors HSL.
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* Surfaces — Google gray-50 background */
+    --background: 210 17% 98%;        /* #f8f9fa */
+    --foreground: 220 9% 13%;         /* #202124 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 9% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 9% 13%;
+
+    /* Brand — navy Material */
+    --primary: 211 74% 17%;           /* #0B2A4A */
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 211 74% 95%;
+    --primary-dark: 211 74% 20%;      /* #0d3259 hover */
+
+    --secondary: 210 14% 95%;         /* #f1f3f4 */
+    --secondary-foreground: 220 9% 13%;
+
+    --muted: 210 14% 95%;             /* #f1f3f4 */
+    --muted-foreground: 220 5% 39%;   /* #5f6368 */
+    --muted-2: 220 4% 53%;            /* #80868b */
+
+    --accent: 210 14% 95%;
+    --accent-foreground: 220 9% 13%;
+
+    --destructive: 2 70% 46%;         /* #c5221f */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 9% 86%;             /* #dadce0 */
+    --line: 210 9% 86%;
+    --line-soft: 210 14% 92%;         /* #e8eaed */
+    --input: 210 9% 86%;
+    --ring: 211 74% 17%;
+
+    --radius: 0.75rem;                /* 12px — cartes */
+
+    /* Gold accent — #C9A96E */
+    --gold: 36 47% 61%;               /* #C9A96E */
+    --gold-soft: 36 47% 92%;
+    --gold-text: 41 100% 27%;         /* #8a6800 */
+
+    /* Score gradient — 5 buckets */
+    --s1: 2 70% 46%;       /* Rouge #c5221f */
+    --s2: 32 100% 46%;     /* Orange #ea8600 */
+    --s3: 36 47% 61%;      /* Or */
+    --s4: 142 65% 30%;     /* Vert #137333 */
+    --s5: 211 74% 17%;     /* Navy */
+
+    --s1-soft: 5 84% 95%;     /* #fce8e6 */
+    --s2-soft: 36 92% 94%;    /* #fef3e2 */
+    --s3-soft: 36 47% 92%;
+    --s4-soft: 138 50% 92%;   /* #e6f4ea */
+    --s5-soft: 211 74% 95%;
+
+    /* Avatar palette */
+    --c0: 211 74% 17%;
+    --c1: 271 76% 53%;
+    --c2: 340 75% 55%;
+    --c3: 32 100% 46%;
+    --c4: 142 65% 30%;
+    --c5: 199 89% 48%;
+    --c6: 36 47% 61%;
+    --c7: 173 58% 39%;
+
+    /* Sidebar — clair */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 5% 39%;
+    --sidebar-muted: 220 4% 53%;
+    --sidebar-border: 210 14% 92%;
+    --sidebar-accent: 211 74% 17%;     /* used as accent text on active */
+    --sidebar-accent-foreground: 211 74% 17%;
+    --sidebar-ring: 211 74% 17%;
+    --sidebar-active: 211 74% 17%;
+
+    /* Google Material elevation */
+    --shadow-card: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+    --shadow-elevated: 0 1px 2px rgba(60,64,67,.3), 0 2px 6px 2px rgba(60,64,67,.15);
+
+    --font-sans: 'Google Sans', 'Roboto', 'Inter', system-ui, -apple-system, Arial, sans-serif;
+    --font-serif: 'Google Sans', 'Roboto', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    @apply bg-background text-foreground;
+  }
+  /* Material 3 — pas d'uppercase imposé */
+  .uppercase { text-transform: none !important; letter-spacing: 0 !important; }
+  .font-serif { font-family: var(--font-serif); }
+  .font-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .tnum { font-variant-numeric: tabular-nums; }
+}
+
+@layer components {
+  /* Score color utilities */
+  .score-bg-s1 { background-color: hsl(var(--s1-soft)); color: hsl(var(--s1)); }
+  .score-bg-s2 { background-color: hsl(var(--s2-soft)); color: hsl(var(--s2)); }
+  .score-bg-s3 { background-color: hsl(var(--s3-soft)); color: hsl(var(--s3)); }
+  .score-bg-s4 { background-color: hsl(var(--s4-soft)); color: hsl(var(--s4)); }
+  .score-bg-s5 { background-color: hsl(var(--s5-soft)); color: hsl(var(--s5)); }
+
+  .score-fill-s1 { background-color: hsl(var(--s1)); }
+  .score-fill-s2 { background-color: hsl(var(--s2)); }
+  .score-fill-s3 { background-color: hsl(var(--s3)); }
+  .score-fill-s4 { background-color: hsl(var(--s4)); }
+  .score-fill-s5 { background-color: hsl(var(--s5)); }
+
+  .score-text-s1 { color: hsl(var(--s1)); }
+  .score-text-s2 { color: hsl(var(--s2)); }
+  .score-text-s3 { color: hsl(var(--s3)); }
+  .score-text-s4 { color: hsl(var(--s4)); }
+  .score-text-s5 { color: hsl(var(--s5)); }
+
+  .pulse-dot {
+    @apply relative inline-block w-2 h-2 rounded-full bg-emerald-500;
+  }
+  .pulse-dot::after {
+    content: ''; position: absolute; inset: 0; border-radius: 9999px;
+    background: hsl(142 71% 45% / 0.5);
+    animation: pulse-ring 1.8s ease-out infinite;
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+
+  .ai-shimmer {
+    background: linear-gradient(110deg, hsl(var(--primary-soft)) 30%, hsl(var(--primary) / 0.15) 50%, hsl(var(--primary-soft)) 70%);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 0%; }
+    50% { background-position: -100% 0%; }
+  }
+}
