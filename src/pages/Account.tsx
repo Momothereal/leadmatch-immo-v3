@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   User, Building2, Phone, Mail, Lock, Gift, Copy, Check,
-  Loader2, Users, Award,
+  Loader2, Users, Award, Eye, EyeOff,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -130,12 +130,20 @@ export default function Account() {
   };
 
   // ── Mot de passe ──────────────────────────────────────────────────────────
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handlePasswordUpdate = async (e: FormEvent) => {
     e.preventDefault();
+    if (!currentPassword) {
+      toast.error("Mot de passe actuel requis");
+      return;
+    }
     if (newPassword.length < 8) {
       toast.error("Mot de passe trop court", { description: "8 caractères minimum." });
       return;
@@ -144,13 +152,28 @@ export default function Account() {
       toast.error("Les mots de passe ne correspondent pas");
       return;
     }
+    if (newPassword === currentPassword) {
+      toast.error("Le nouveau mot de passe doit être différent de l'actuel");
+      return;
+    }
     setPwLoading(true);
+    // Vérification du mot de passe actuel via re-authentification
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user!.email!,
+      password: currentPassword,
+    });
+    if (signInError) {
+      setPwLoading(false);
+      toast.error("Mot de passe actuel incorrect");
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setPwLoading(false);
     if (error) {
       toast.error("Impossible de modifier le mot de passe", { description: error.message });
     } else {
       toast.success("Mot de passe mis à jour");
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     }
@@ -287,30 +310,83 @@ export default function Account() {
         {/* ── Mot de passe ── */}
         <Section title="Mot de passe" icon={Lock}>
           <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            <Field label="Mot de passe actuel">
+              <div className="relative">
+                <Input
+                  type={showCurrent ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Votre mot de passe actuel"
+                  className="h-10 pr-10"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrent((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </Field>
+
+            <div className="border-t border-line-soft" />
+
             <Field label="Nouveau mot de passe">
-              <Input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="8 caractères minimum"
-                className="h-10"
-                minLength={8}
-              />
+              <div className="relative">
+                <Input
+                  type={showNew ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="8 caractères minimum"
+                  className="h-10 pr-10"
+                  autoComplete="new-password"
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNew((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </Field>
-            <Field label="Confirmer le mot de passe">
-              <Input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Répétez le mot de passe"
-                className="h-10"
-              />
+
+            <Field label="Confirmer le nouveau mot de passe">
+              <div className="relative">
+                <Input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Répétez le nouveau mot de passe"
+                  className="h-10 pr-10"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {/* Indicateur de correspondance */}
+              {confirmPassword && (
+                <p className={`text-[11px] mt-1 ${newPassword === confirmPassword ? "text-green-500" : "text-red-400"}`}>
+                  {newPassword === confirmPassword ? "✓ Les mots de passe correspondent" : "✗ Les mots de passe ne correspondent pas"}
+                </p>
+              )}
             </Field>
+
             <div className="flex justify-end">
               <Button
                 type="submit"
                 variant="outline"
-                disabled={pwLoading || !newPassword || !confirmPassword}
+                disabled={pwLoading || !currentPassword || !newPassword || !confirmPassword}
                 className="h-9 px-5 text-sm"
               >
                 {pwLoading && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
