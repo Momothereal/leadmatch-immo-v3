@@ -16,8 +16,45 @@ const json = (body: unknown, status = 200) =>
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
 
+  // Service role client (pas besoin d'auth pour lire l'invitation)
+  const admin = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  );
+
+  // ── GET : info publique de l'invitation (sans auth) ──────────────────────
+  // Usage : GET /accept-team-invite?token=xxx
+  if (req.method === "GET") {
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    if (!token) return json({ error: "token manquant" }, 400);
+
+    const { data: member, error } = await admin
+      .from("team_members")
+      .select("email, status, invited_at, teams(name, owner_id)")
+      .eq("invite_token", token)
+      .single();
+
+    if (error || !member) return json({ error: "Invitation introuvable" }, 404);
+
+    // Récupérer l'email de l'owner pour l'afficher
+    const { data: ownerData } = await admin.auth.admin.getUserById(
+      // @ts-ignore
+      member.teams?.owner_id ?? "",
+    );
+
+    return json({
+      invited_email: member.email,
+      status: member.status,
+      invited_at: member.invited_at,
+      // @ts-ignore
+      team_name: member.teams?.name ?? null,
+      owner_email: ownerData?.user?.email ?? null,
+    });
+  }
+
+  // ── POST : accepter l'invitation (auth requise) ──────────────────────────
   try {
-    // ── Auth : récupérer l'utilisateur appelant ──────────────────────────
     const anonClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -30,35 +67,28 @@ serve(async (req) => {
     );
     if (authErr || !user) return json({ error: "Token invalide" }, 401);
 
-    // ── Body ─────────────────────────────────────────────────────────────
     const { invite_token } = await req.json() as { invite_token?: string };
     if (!invite_token) return json({ error: "invite_token manquant" }, 400);
 
-    // ── Service role pour contourner RLS ─────────────────────────────────
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    );
-
-    // ── Chercher l'invitation ─────────────────────────────────────────────
     const { data: member, error: findErr } = await admin
       .from("team_members")
-      .select("id, email, status, team_id, teams(owner_id, name)")
+      .select("id, email, status, teams(name)")
       .eq("invite_token", invite_token)
       .single();
 
     if (findErr || !member) return json({ error: "Invitation introuvable ou expirée" }, 404);
-    if (member.status !== "pending") return json({ error: "Cette invitation a déjà été utilisée" }, 409);
+    if (member.status === "active") return json({ success: true, already: true, message: "Vous faites déjà partie de cette équipe." });
+    if (member.status === "removed") return json({ error: "Cette invitation a été révoquée par l'administrateur." }, 409);
 
-    // ── Vérifier que l'email correspond ───────────────────────────────────
+    // Vérifier que l'email correspond
     if (member.email.toLowerCase() !== user.email!.toLowerCase()) {
       return json(
-        { error: `Cette invitation est réservée à ${member.email}. Connectez-vous avec cette adresse.` },
+        { error: `Cette invitation est réservée à ${member.email}.\nConnectez-vous avec cette adresse e-mail.` },
         403,
       );
     }
 
-    // ── Accepter ─────────────────────────────────────────────────────────
+    // Accepter
     const { error: updateErr } = await admin
       .from("team_members")
       .update({ user_id: user.id, status: "active", joined_at: new Date().toISOString() })
@@ -66,9 +96,9 @@ serve(async (req) => {
 
     if (updateErr) throw updateErr;
 
-    // @ts-ignore dynamic join
+    // @ts-ignore
     const teamName = member.teams?.name ?? "l'équipe";
-    return json({ success: true, message: `Vous avez rejoint ${teamName} !` });
+    return json({ success: true, message: `Bienvenue dans ${teamName} !` });
 
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

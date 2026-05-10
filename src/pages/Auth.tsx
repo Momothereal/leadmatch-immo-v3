@@ -71,19 +71,26 @@ const Auth = ({ defaultMode = "signin" }: { defaultMode?: "signin" | "signup" })
       return;
     }
     setSubmitting(true);
+    // emailRedirectTo : si invitation → revient sur /invite/{token} après confirmation email
+    const emailRedirectTo = inviteToken
+      ? `${window.location.origin}/invite/${inviteToken}`
+      : `${window.location.origin}/pricing`;
+
     const { error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
-      options: { emailRedirectTo: `${window.location.origin}/pricing` },
+      options: { emailRedirectTo },
     });
     setSubmitting(false);
     if (error) {
       toast.error("Inscription impossible", { description: error.message });
       return;
     }
-    // Si invitation → accepter directement, sinon plan tarifaire
     if (inviteToken) {
-      toast.success("Compte créé !", { description: "Acceptation de l'invitation…" });
+      toast.success("Compte créé !", {
+        description: "Vérifiez votre boîte mail pour confirmer votre adresse, puis revenez sur le lien d'invitation.",
+      });
+      // Rester sur la page d'invite pour expliquer la suite
       navigate(`/invite/${inviteToken}`, { replace: true });
       return;
     }
