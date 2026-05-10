@@ -217,8 +217,8 @@ const Landing = () => {
             <div className="mt-8 flex items-center gap-2 reveal" style={{ transitionDelay: "320ms" }}>
               <span className="star">★★★★★</span>
               <span className="text-ink-500 text-sm">
-                <span className="font-semibold text-ink-900">200+</span> agents actifs ·{" "}
-                <span className="font-semibold text-ink-900">1 200</span> matchs réalisés cette semaine
+                <span className="font-semibold text-ink-900">5/5</span> · 5 avis ·{" "}
+                <span className="font-semibold text-ink-900">32+</span> agents actifs
               </span>
             </div>
 
@@ -332,7 +332,7 @@ const Landing = () => {
               <div className="w-11 h-11 rounded-lg flex items-center justify-center" style={{ background: "rgba(200,169,110,0.12)", border: "1px solid rgba(200,169,110,0.3)" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8A96E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M9 12h6" /><path d="M9 16h6" /><path d="M9 8h.01" /></svg>
               </div>
-              <div className="mt-5 text-5xl font-extrabold tracking-tight text-ink-900 tabular-nums">200+</div>
+              <div className="mt-5 text-5xl font-extrabold tracking-tight text-ink-900 tabular-nums">150+</div>
               <div className="mt-1 text-sm text-ink-500">leads à gérer en simultané</div>
               <p className="mt-3 text-ink-500 text-sm leading-relaxed">Sans outil, tous semblent aussi urgents les uns que les autres.</p>
             </div>
@@ -456,7 +456,7 @@ const Landing = () => {
               <span className="pill-base pill-green">Pipeline</span>
               <h3 className="mt-4 text-3xl md:text-4xl font-bold text-ink-900" style={{ letterSpacing: "-0.02em" }}>De la présentation à la signature. Rien ne tombe.</h3>
               <p className="mt-4 text-ink-500 leading-relaxed">
-                Chaque match suit un pipeline visuel : Présenté, Visite, Offre, Compromis, Conclu. Rappels, notes, historique — votre suivi est toujours à jour, même sur 200 dossiers.
+                Chaque match suit un pipeline visuel : Présenté, Visite, Offre, Compromis, Conclu. Rappels, notes, historique — votre suivi est toujours à jour, même sur 150 dossiers.
               </p>
             </div>
             <div className="reveal" style={{ transitionDelay: "120ms" }}>
@@ -509,15 +509,17 @@ const Landing = () => {
             </h2>
           </div>
 
-          <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
             {[
               { initials: "SM", name: "Sophie M.", agency: "Marseille · Agence Côté Sud", quote: "Avant LeadMatch, je passais mes lundis à trier mes leads manuellement. Maintenant j'arrive avec ma shortlist prête. J'appelle 5 personnes au lieu de 20. Et je signe plus." },
-              { initials: "TL", name: "Thomas L.", agency: "Lyon · Lemaire Immobilier", quote: "Le score m'a fait réaliser que certains leads que j'ignorais étaient mes meilleurs prospects. En 3 semaines, 2 ventes sur des contacts que j'avais mis de côté." },
               { initials: "AB", name: "Alexandre B.", agency: "Paris · Cabinet Bertrand", quote: "Ce qui m'a convaincu c'est le détail du score. Il ne dit pas juste 80/100. Il m'explique pourquoi, et ce que je dois dire au client. C'est comme avoir un assistant qui prépare chaque appel." },
             ].map((t) => (
               <article key={t.initials} className="lm-card p-6 flex flex-col">
                 <div className="quote-mark">"</div>
-                <div className="star -mt-3">★★★★★</div>
+                <div className="flex items-center gap-2 -mt-3">
+                  <span className="star">★★★★★</span>
+                  <span className="text-xs font-semibold" style={{ color: "#374151" }}>5/5</span>
+                </div>
                 <p className="mt-3 italic leading-relaxed text-ink-700">{t.quote}</p>
                 <div className="hairline mt-5 pt-4 flex items-center gap-3">
                   <div className="avatar">{t.initials}</div>
@@ -532,8 +534,8 @@ const Landing = () => {
 
           <div className="mt-14 lm-card p-8 flex flex-col md:flex-row items-stretch justify-around gap-6 md:gap-0">
             {[
-              ["200+", "agences actives"],
-              ["12 400", "leads scorés"],
+              ["32+", "agences actives"],
+              ["1 400", "leads scorés"],
               ["68%", "temps économisé"],
             ].map(([v, l], i) => (
               <span key={l} className="contents">
@@ -674,7 +676,8 @@ const Landing = () => {
           <div className="mt-5 flex items-center justify-center gap-2">
             <span className="star">★★★★★</span>
             <span className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
-              Déjà <span className="font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>200+</span> agents qui matchent mieux.
+              <span className="font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>5/5</span> · 5 avis ·{" "}
+              Déjà <span className="font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>32+</span> agents qui matchent mieux.
             </span>
           </div>
         </div>
