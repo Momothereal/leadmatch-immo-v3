@@ -705,15 +705,16 @@ const Landing = () => {
           <div>
             <div className="label mb-3" style={{ color: "#fff" }}>Légal</div>
             <ul className="flex flex-col gap-2 text-sm">
-              <li><a href="#" style={{ color: "#94A3B8" }}>CGU</a></li>
-              <li><a href="#" style={{ color: "#94A3B8" }}>Confidentialité</a></li>
-              <li><a href="#" style={{ color: "#94A3B8" }}>Mentions légales</a></li>
+              <li><Link to="/cgu" style={{ color: "#94A3B8" }}>CGU</Link></li>
+              <li><Link to="/cgv" style={{ color: "#94A3B8" }}>CGV</Link></li>
+              <li><Link to="/confidentialite" style={{ color: "#94A3B8" }}>Confidentialité</Link></li>
+              <li><Link to="/mentions-legales" style={{ color: "#94A3B8" }}>Mentions légales</Link></li>
             </ul>
           </div>
           <div>
             <div className="label mb-3" style={{ color: "#fff" }}>Contact</div>
             <ul className="flex flex-col gap-2 text-sm">
-              <li><a href="mailto:hello@leadmatch.io" style={{ color: "#94A3B8" }}>hello@leadmatch.io</a></li>
+              <li><a href="mailto:contact@leadmatch-immo.fr" style={{ color: "#94A3B8" }}>contact@leadmatch-immo.fr</a></li>
               <li><Link to={ctaTo} style={{ color: "#94A3B8" }}>Demander une démo</Link></li>
             </ul>
           </div>

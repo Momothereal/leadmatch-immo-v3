@@ -18,6 +18,10 @@ import PropertyDetail from "./pages/PropertyDetail.tsx";
 import LeadDetail from "./pages/LeadDetail.tsx";
 import MatchHistory from "./pages/MatchHistory.tsx";
 import MatchDetail from "./pages/MatchDetail.tsx";
+import MentionsLegales from "./pages/legal/MentionsLegales.tsx";
+import Confidentialite from "./pages/legal/Confidentialite.tsx";
+import CGU from "./pages/legal/CGU.tsx";
+import CGV from "./pages/legal/CGV.tsx";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +47,11 @@ const App = () => (
             <Route path="/matching" element={<ProtectedRoute><Matching /></ProtectedRoute>} />
             <Route path="/matching/history" element={<ProtectedRoute><MatchHistory /></ProtectedRoute>} />
             <Route path="/matching/history/:id" element={<ProtectedRoute><MatchDetail /></ProtectedRoute>} />
+            {/* Pages légales */}
+            <Route path="/mentions-legales" element={<MentionsLegales />} />
+            <Route path="/confidentialite" element={<Confidentialite />} />
+            <Route path="/cgu" element={<CGU />} />
+            <Route path="/cgv" element={<CGV />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

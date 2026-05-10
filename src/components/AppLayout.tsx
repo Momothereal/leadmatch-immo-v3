@@ -96,6 +96,21 @@ export function AppLayout({ children, title, actions }: { children: ReactNode; t
             <div className="ml-auto flex items-center gap-2">{actions}</div>
           </header>
           <main className="flex-1 min-h-0 overflow-auto bg-background">{children}</main>
+          <footer className="shrink-0 border-t border-line-soft bg-card px-6 py-2 flex flex-wrap gap-4 items-center">
+            <span className="text-[11px] text-muted-foreground">© 2026 LeadMatch Immo</span>
+            <div className="flex gap-3 ml-auto">
+              {[
+                { to: "/mentions-legales", label: "Mentions légales" },
+                { to: "/confidentialite", label: "Confidentialité" },
+                { to: "/cgu", label: "CGU" },
+                { to: "/cgv", label: "CGV" },
+              ].map((l) => (
+                <Link key={l.to} to={l.to} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </footer>
         </div>
       </div>
     </SidebarProvider>
