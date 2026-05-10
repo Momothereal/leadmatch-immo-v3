@@ -18,7 +18,8 @@ const Auth = ({ defaultMode = "signin" }: { defaultMode?: "signin" | "signup" })
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const refCode = searchParams.get("ref"); // code parrainage dans l'URL
+  const refCode = searchParams.get("ref");       // code parrainage
+  const inviteToken = searchParams.get("invite"); // token d'invitation équipe
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">(defaultMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,6 +47,11 @@ const Auth = ({ defaultMode = "signin" }: { defaultMode?: "signin" | "signup" })
       return;
     }
     toast.success("Bienvenue !");
+    // Si invitation en attente → rediriger pour accepter
+    if (inviteToken) {
+      navigate(`/invite/${inviteToken}`, { replace: true });
+      return;
+    }
     navigate("/dashboard", { replace: true });
   };
 
@@ -75,8 +81,13 @@ const Auth = ({ defaultMode = "signin" }: { defaultMode?: "signin" | "signup" })
       toast.error("Inscription impossible", { description: error.message });
       return;
     }
+    // Si invitation → accepter directement, sinon plan tarifaire
+    if (inviteToken) {
+      toast.success("Compte créé !", { description: "Acceptation de l'invitation…" });
+      navigate(`/invite/${inviteToken}`, { replace: true });
+      return;
+    }
     toast.success("Compte créé !", { description: "Choisissez votre plan pour commencer." });
-    // Transmettre le code de parrainage s'il existe
     const pricingUrl = refCode ? `/pricing?ref=${refCode}` : "/pricing";
     navigate(pricingUrl, { replace: true });
   };

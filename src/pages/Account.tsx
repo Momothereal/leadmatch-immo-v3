@@ -2,6 +2,9 @@ import { useState, useEffect, type FormEvent } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useReferral } from "@/hooks/useReferral";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useTeam, MAX_SEATS, MAX_MONTHLY } from "@/hooks/useTeam";
+import { STRIPE_PRICES } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   User, Building2, Phone, Mail, Lock, Gift, Copy, Check,
-  Loader2, Users, Award, Eye, EyeOff,
+  Loader2, Users, Award, Eye, EyeOff, UserPlus, Trash2,
+  ShieldCheck, Clock, Crown,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -58,6 +62,8 @@ export default function Account() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { referralCode, referralLink } = useReferral();
+  const { plan, price_id } = useSubscription() as { plan: string | null; price_id: string | null };
+  const isPro = plan === "admin" || price_id === STRIPE_PRICES.pro_monthly || price_id === STRIPE_PRICES.pro_yearly;
   const [copied, setCopied] = useState(false);
 
   // ── Profil ────────────────────────────────────────────────────────────────
@@ -396,6 +402,9 @@ export default function Account() {
           </form>
         </Section>
 
+        {/* ── Équipe Pro ── */}
+        {isPro && <TeamSection userEmail={user?.email ?? ""} />}
+
         {/* ── Parrainage ── */}
         <Section title="Parrainage" icon={Gift}>
           {/* Banner */}
@@ -475,5 +484,153 @@ export default function Account() {
 
       </div>
     </AppLayout>
+  );
+}
+
+// ─── Section Équipe Pro ───────────────────────────────────────────────────────
+function TeamSection({ userEmail }: { userEmail: string }) {
+  const {
+    team, members, loading,
+    usedSeats, remainingSeats, usedActions, maxMonthly,
+    inviteAgent, removeAgent, inviting, removing,
+  } = useTeam();
+
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+    await inviteAgent(inviteEmail.trim());
+    setInviteEmail("");
+  };
+
+  const copyInviteLink = (token: string) => {
+    const link = `${window.location.origin}/invite/${token}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedToken(token);
+      toast.success("Lien d'invitation copié !");
+      setTimeout(() => setCopiedToken(null), 2500);
+    });
+  };
+
+  const statusBadge = (status: string) => {
+    if (status === "active") return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-100">
+        <ShieldCheck className="w-3 h-3" /> Actif
+      </span>
+    );
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100">
+        <Clock className="w-3 h-3" /> En attente
+      </span>
+    );
+  };
+
+  return (
+    <Section title="Équipe Pro — Gestion des agents" icon={Users}>
+      {/* En-tête : sièges + actions */}
+      <div className="flex flex-wrap gap-3">
+        <div className="flex-1 min-w-[140px] rounded-xl border border-line-soft bg-secondary/40 p-4 text-center">
+          <div className="text-2xl font-bold text-foreground">{usedSeats + 1}<span className="text-sm font-normal text-muted-foreground">/{MAX_SEATS}</span></div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">Sièges occupés</div>
+        </div>
+        <div className="flex-1 min-w-[140px] rounded-xl border border-line-soft bg-secondary/40 p-4 text-center">
+          <div className="text-2xl font-bold text-foreground">{remainingSeats}</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">Places disponibles</div>
+        </div>
+        <div className="flex-1 min-w-[140px] rounded-xl border border-line-soft bg-secondary/40 p-4 text-center">
+          <div className="text-2xl font-bold text-foreground">{usedActions}<span className="text-sm font-normal text-muted-foreground">/{maxMonthly}</span></div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">Actions ce mois</div>
+        </div>
+      </div>
+
+      {/* Vous (owner) */}
+      <div className="rounded-xl border border-line-soft p-3 flex items-center gap-3 bg-primary/5">
+        <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-[13px] font-bold text-[hsl(var(--gold))] shrink-0">
+          {userEmail[0]?.toUpperCase() ?? "A"}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-foreground truncate">{userEmail}</div>
+          <div className="text-[11px] text-muted-foreground">Vous</div>
+        </div>
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#0F2D52]/10 text-[#0F2D52] border border-[#0F2D52]/20">
+          <Crown className="w-3 h-3" /> Admin
+        </span>
+      </div>
+
+      {/* Liste des agents */}
+      {loading ? (
+        <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+      ) : members.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {members.map((m) => (
+            <div key={m.id} className="rounded-xl border border-line-soft p-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-[13px] font-bold text-muted-foreground shrink-0">
+                {m.email[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-foreground truncate">{m.email}</div>
+                <div className="text-[11px] text-muted-foreground">Agent</div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {statusBadge(m.status)}
+                {m.status === "pending" && (
+                  <button
+                    onClick={() => copyInviteLink(m.invite_token)}
+                    className="w-7 h-7 rounded-lg border border-line-soft flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition"
+                    title="Copier le lien d'invitation"
+                  >
+                    {copiedToken === m.invite_token ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                )}
+                <button
+                  onClick={() => removeAgent(m.id)}
+                  disabled={removing}
+                  className="w-7 h-7 rounded-lg border border-red-100 flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-500 transition disabled:opacity-40"
+                  title="Retirer l'agent"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground text-center py-2">
+          Aucun agent invité pour l'instant.
+        </p>
+      )}
+
+      {/* Formulaire d'invitation */}
+      {remainingSeats > 0 ? (
+        <form onSubmit={handleInvite} className="flex gap-2 pt-1">
+          <div className="relative flex-1">
+            <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="email@agent.fr"
+              className="h-10 pl-10"
+              required
+            />
+          </div>
+          <Button type="submit" disabled={inviting || !inviteEmail.trim()} className="h-10 px-4 shrink-0">
+            {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Inviter"}
+          </Button>
+        </form>
+      ) : (
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700 text-center">
+          Limite atteinte — 4 agents maximum sur le plan Pro.
+        </div>
+      )}
+
+      <p className="text-[11px] text-muted-foreground leading-relaxed">
+        Chaque agent invité reçoit un lien unique à partager. Il doit créer un compte avec l'adresse e-mail indiquée.
+        Maximum <strong>{MAX_SEATS - 1} agents</strong> + vous = {MAX_SEATS} sièges au total.
+        Les add/remove sont limités à <strong>{maxMonthly}</strong> par mois calendaire (anti-abus).
+      </p>
+    </Section>
   );
 }
