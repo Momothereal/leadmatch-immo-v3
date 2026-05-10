@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Building2, Users, Zap, TrendingUp, ArrowRight, Phone, Calendar, ExternalLink,
-  CheckCheck, MoreHorizontal, Upload, Plus, Activity, Star, FileText, Heart, Trophy,
+  CheckCheck, MoreHorizontal, Upload, Plus, Activity, Star, FileText, Heart, Trophy, Gift, Copy, Check,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,7 @@ import { ImportDialog } from "@/components/leadmatch/import/ImportDialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useReferral } from "@/hooks/useReferral";
 
 interface MatchRow {
   id: string; score: number; created_at: string;
@@ -25,6 +26,7 @@ interface LeadRow {
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { referralLink, referralCode } = useReferral();
   const [counts, setCounts] = useState({ properties: 0, leads: 0, matches: 0, avgScore: 0 });
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [recentLeads, setRecentLeads] = useState<LeadRow[]>([]);
@@ -155,6 +157,11 @@ const Dashboard = () => {
             onImportProps={() => openImport("properties")}
           />
         </div>
+
+        {/* Referral */}
+        {referralLink && (
+          <ReferralCard referralLink={referralLink} referralCode={referralCode ?? ""} />
+        )}
 
         {/* Recent tables */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -522,5 +529,46 @@ const ScoreBadge = ({ value }: { value: number }) => {
   const cls = value >= 81 ? "score-bg-s5" : value >= 61 ? "score-bg-s4" : value >= 41 ? "score-bg-s3" : value >= 21 ? "score-bg-s2" : "score-bg-s1";
   return <div className={cn("w-9 h-9 rounded-md flex items-center justify-center text-xs font-semibold tnum", cls)}>{value}</div>;
 };
+
+/* -------- Referral card -------- */
+function ReferralCard({ referralLink, referralCode }: { referralLink: string; referralCode: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = () => {
+    navigator.clipboard.writeText(referralLink).then(() => {
+      setCopied(true);
+      toast.success("Lien copié !");
+      setTimeout(() => setCopied(false), 2500);
+    });
+  };
+
+  return (
+    <div className="rounded-2xl border bg-gradient-to-r from-[#0F2D52] to-[#1E4D8C] p-5 flex flex-col md:flex-row md:items-center gap-4">
+      <div className="flex items-center gap-3 flex-1">
+        <div className="w-10 h-10 rounded-full bg-[rgba(200,169,110,0.2)] flex items-center justify-center shrink-0">
+          <Gift className="w-5 h-5 text-[#C8A96E]" />
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-white">Parrainez un collègue · 1 mois offert</div>
+          <div className="text-xs text-white/60 mt-0.5">
+            Partagez votre lien. Dès que votre filleul souscrit, votre abonnement est prolongé d'un mois gratuitement.
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 md:w-64 h-9 px-3 rounded-lg bg-white/10 border border-white/20 text-xs text-white/80 font-mono flex items-center truncate">
+          {referralLink}
+        </div>
+        <button
+          onClick={copy}
+          className="h-9 w-9 rounded-lg bg-[#C8A96E] hover:bg-[#b8995c] flex items-center justify-center shrink-0 transition"
+          title="Copier le lien"
+        >
+          {copied ? <Check className="w-4 h-4 text-[#0F2D52]" /> : <Copy className="w-4 h-4 text-[#0F2D52]" />}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default Dashboard;
