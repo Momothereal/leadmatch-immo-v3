@@ -21,7 +21,9 @@ const corsHeaders = {
 };
 
 const APP_URL = Deno.env.get("PUBLIC_APP_URL") ?? "https://leadmatch-immo-app.netlify.app";
-const FROM = "LeadMatch Immo <bonjour@leadmatch-immo.fr>";
+// Utilise onboarding@resend.dev jusqu'à vérification du domaine leadmatch-immo.fr
+// Une fois le domaine vérifié sur resend.com, remplacer par : "LeadMatch Immo <bonjour@leadmatch-immo.fr>"
+const FROM = "LeadMatch Immo <onboarding@resend.dev>";
 
 type EmailDay = 1 | 5 | 12 | "expire";
 
