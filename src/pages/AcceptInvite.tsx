@@ -66,6 +66,7 @@ export default function AcceptInvite() {
     fetch(url, {
       headers: {
         "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       },
     })
       .then((r) => r.json())
