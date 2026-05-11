@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Building2, Users, Zap, TrendingUp, ArrowRight, Phone, Calendar, ExternalLink,
-  CheckCheck, MoreHorizontal, Upload, Plus, Activity, Star, FileText, Heart, Trophy, Gift, Copy, Check,
+  Building2, Users, Zap, TrendingUp, ArrowRight, Phone, ExternalLink,
+  CheckCheck, MoreHorizontal, Upload, Activity, FileText, Heart, Trophy, Gift, Copy, Check,
+  AlertTriangle, Clock, CheckCircle2, ChevronRight,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useReferral } from "@/hooks/useReferral";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface MatchRow {
   id: string; score: number; created_at: string;
@@ -27,6 +29,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { referralLink, referralCode } = useReferral();
+  const { isTrial, trialDaysLeft, isPro, subscribed } = useSubscription();
   const [counts, setCounts] = useState({ properties: 0, leads: 0, matches: 0, avgScore: 0 });
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [recentLeads, setRecentLeads] = useState<LeadRow[]>([]);
@@ -82,6 +85,24 @@ const Dashboard = () => {
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
+
+        {/* Bandeau essai */}
+        {isTrial && trialDaysLeft !== null && (
+          <TrialBanner daysLeft={trialDaysLeft} onUpgrade={() => navigate("/pricing")} />
+        )}
+
+        {/* Onboarding checklist (si débutant) */}
+        {counts.properties === 0 || counts.leads === 0 ? (
+          <OnboardingChecklist
+            hasProperties={counts.properties > 0}
+            hasLeads={counts.leads > 0}
+            hasMatches={counts.matches > 0}
+            navigate={navigate}
+            onImportLeads={() => openImport("leads")}
+            onImportProps={() => openImport("properties")}
+          />
+        ) : null}
+
         {/* Hero */}
         <div className="rounded-2xl p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm bg-[#0F2D52]">
           <div>
@@ -566,6 +587,141 @@ function ReferralCard({ referralLink, referralCode }: { referralLink: string; re
         >
           {copied ? <Check className="w-4 h-4 text-[#0F2D52]" /> : <Copy className="w-4 h-4 text-[#0F2D52]" />}
         </button>
+      </div>
+    </div>
+  );
+}
+
+/* -------- Trial Banner -------- */
+function TrialBanner({ daysLeft, onUpgrade }: { daysLeft: number; onUpgrade: () => void }) {
+  const urgent = daysLeft <= 3;
+  const bgClass = urgent
+    ? "bg-gradient-to-r from-red-600 to-red-700"
+    : "bg-gradient-to-r from-amber-500 to-amber-600";
+
+  return (
+    <div className={cn("rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4", bgClass)}>
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+          {urgent
+            ? <AlertTriangle className="w-4 h-4 text-white" />
+            : <Clock className="w-4 h-4 text-white" />
+          }
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-white">
+            {daysLeft === 0
+              ? "Votre essai expire aujourd'hui !"
+              : `Essai gratuit — ${daysLeft} jour${daysLeft > 1 ? "s" : ""} restant${daysLeft > 1 ? "s" : ""}`}
+          </p>
+          <p className="text-xs text-white/75">
+            {urgent
+              ? "Souscrivez maintenant pour ne pas perdre vos données"
+              : "Profitez de toutes les fonctionnalités Pro pendant votre essai"}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={onUpgrade}
+        className="shrink-0 h-8 px-4 rounded-lg bg-white text-sm font-semibold text-amber-700 hover:bg-amber-50 transition inline-flex items-center gap-1"
+      >
+        Souscrire <ChevronRight className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
+/* -------- Onboarding Checklist -------- */
+function OnboardingChecklist({
+  hasProperties, hasLeads, hasMatches, navigate, onImportLeads, onImportProps,
+}: {
+  hasProperties: boolean; hasLeads: boolean; hasMatches: boolean;
+  navigate: ReturnType<typeof useNavigate>;
+  onImportLeads: () => void; onImportProps: () => void;
+}) {
+  const steps = [
+    {
+      done: hasProperties,
+      label: "Ajoutez votre premier bien",
+      desc: "Renseignez un bien à vendre ou louer",
+      action: () => navigate("/properties"),
+      cta: "Ajouter un bien",
+      icon: Building2,
+      color: "#0F2D52",
+    },
+    {
+      done: hasLeads,
+      label: "Importez vos leads",
+      desc: "Importez votre fichier Excel ou saisissez manuellement",
+      action: onImportLeads,
+      cta: "Importer des leads",
+      icon: Users,
+      color: "#2563EB",
+    },
+    {
+      done: hasMatches,
+      label: "Lancez votre premier matching IA",
+      desc: "Obtenez vos scores de compatibilité en 30 secondes",
+      action: () => navigate("/matching"),
+      cta: "Lancer le matching",
+      icon: Zap,
+      color: "#C8A96E",
+    },
+  ];
+
+  const doneCount = steps.filter(s => s.done).length;
+  const pct = Math.round((doneCount / steps.length) * 100);
+
+  return (
+    <div className="rounded-2xl border bg-card p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-[#111827]">Démarrage rapide</p>
+          <p className="text-xs text-muted-foreground">{doneCount}/{steps.length} étapes complétées</p>
+        </div>
+        <div className="text-sm font-bold text-[#0F2D52]">{pct}%</div>
+      </div>
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div className="h-full rounded-full bg-[#0F2D52] transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="space-y-2">
+        {steps.map((step) => {
+          const Icon = step.icon;
+          return (
+            <div
+              key={step.label}
+              className={cn(
+                "flex items-center gap-3 p-3 rounded-xl transition",
+                step.done ? "opacity-60" : "hover:bg-muted/50 cursor-pointer"
+              )}
+              onClick={step.done ? undefined : step.action}
+            >
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: step.done ? "#F3F4F6" : `${step.color}18` }}
+              >
+                {step.done
+                  ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  : <Icon className="w-4 h-4" style={{ color: step.color }} />
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={cn("text-sm font-medium", step.done && "line-through text-muted-foreground")}>
+                  {step.label}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{step.desc}</p>
+              </div>
+              {!step.done && (
+                <button
+                  onClick={e => { e.stopPropagation(); step.action(); }}
+                  className="shrink-0 h-7 px-3 rounded-lg text-xs font-semibold bg-[#0F2D52] text-white hover:bg-[#1E4D8C] transition"
+                >
+                  {step.cta}
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

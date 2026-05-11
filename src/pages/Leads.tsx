@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Users, Upload, AlertTriangle, Mail, Phone, Trash2, X, CheckSquare, Square } from "lucide-react";
+import { Users, Upload, AlertTriangle, Mail, Phone, Trash2, X, CheckSquare, Square, Zap, ArrowRight } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { ImportDialog } from "@/components/leadmatch/import/ImportDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtEurShort } from "@/lib/format";
 import { toast } from "sonner";
+import { useSubscription, STANDARD_LEAD_LIMIT } from "@/hooks/useSubscription";
+import { Link } from "react-router-dom";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -28,6 +30,7 @@ const Leads = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const { isStandard, isPro } = useSubscription();
 
   useEffect(() => {
     (async () => {
@@ -95,6 +98,26 @@ const Leads = () => {
           <span className="font-semibold">Mes leads</span>
           <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground tnum">{items.length}</span>
         </div>
+
+        {/* Upsell Standard → Pro */}
+        {isStandard && items.length >= STANDARD_LEAD_LIMIT && (
+          <div className="rounded-xl bg-gradient-to-r from-[#0F2D52] to-[#1E4D8C] p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-[#C8A96E]/20 flex items-center justify-center shrink-0">
+                <Zap className="w-5 h-5 text-[#C8A96E]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">Limite Standard atteinte ({STANDARD_LEAD_LIMIT} leads)</p>
+                <p className="text-xs text-white/70">Passez Pro pour des leads illimités, un scoring illimité et la gestion d'équipe.</p>
+              </div>
+            </div>
+            <Link to="/pricing" className="shrink-0">
+              <button className="h-8 px-4 rounded-lg bg-[#C8A96E] hover:bg-[#b8995c] text-[#0F2D52] text-xs font-semibold inline-flex items-center gap-1 transition">
+                Passer Pro <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </Link>
+          </div>
+        )}
 
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-start gap-2">
           <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
